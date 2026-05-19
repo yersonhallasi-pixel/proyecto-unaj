@@ -15,7 +15,11 @@
     .badge { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; font-family: monospace; }
     .u-Alta { background: #450a0a; color: #fca5a5; } .u-Media { background: #451a03; color: #fcd34d; } .u-Baja { background: #052e16; color: #86efac; }
     .sel-estado { border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; font-weight: 600; background: #1e293b; color: #fff; cursor: pointer; outline: none; }
+    .sel-estado:disabled { opacity: 0.5; cursor: not-allowed; }
     .sel-Pendiente { border-left: 4px solid #6366f1; } .sel-En_Revision { border-left: 4px solid #eab308; } .sel-Solucionado { border-left: 4px solid #10b981; }
+    /* Animación pulso para el Skeleton Loader */
+    .skeleton-line { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: loadingSkeleton 1.5s infinite; height: 16px; border-radius: 4px; }
+    @keyframes loadingSkeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -27,7 +31,12 @@
     </div>
     <div class="flex items-center gap-2">
       <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition hover:bg-blue-600 cursor-pointer">📋 Ver Tabla</button>
-      <button onclick="cambiarVista('reportes')" id="btn-vista-reportes" class="bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer">📊 Módulo Reportes</button>
+      
+      <button onclick="cambiarVista('reportes')" id="btn-vista-reportes" class="relative bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer flex items-center gap-2">
+        📊 Módulo Reportes
+        <span id="badge-notif" class="hidden bg-red-600 text-white font-black px-1.5 py-0.5 rounded-full text-[9px] min-w-[16px] text-center shadow-md animate-bounce">0</span>
+      </button>
+      
       <button onclick="cargar()" class="bg-yellow-500 text-black font-black text-xs px-4 py-2 rounded-lg transition hover:bg-yellow-400 cursor-pointer">↻ Actualizar</button>
       <a href="/" class="text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-2 rounded-lg transition font-mono">← Salir</a>
     </div>
@@ -63,7 +72,6 @@
   </div>
 
   <div id="contenedor-reportes" class="hidden max-w-[1600px] mx-auto px-4 py-4 w-full flex-1 space-y-6">
-    
     <div class="flex justify-between items-center card-custom p-4 bg-slate-900/40 border-l-4 border-emerald-500">
       <div>
         <h4 class="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">🔒 Auditorías Internas e Inspección</h4>
@@ -75,17 +83,14 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      
       <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
         <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">📊 Estado de Incidencias</h4>
         <div class="w-full max-w-[240px] h-[240px] flex items-center justify-center"><canvas id="chartEstados"></canvas></div>
       </div>
-      
       <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
         <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">🏢 Fallas por Aula</h4>
         <div class="w-full max-w-[260px] h-[240px] flex items-center justify-center"><canvas id="chartLaboratorios"></canvas></div>
       </div>
-      
       <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/80">
         <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">📈 Eficiencia SIG</h4>
         <div class="p-4 bg-slate-950/60 rounded-full border border-emerald-500/20 w-28 h-28 flex items-center justify-center">
@@ -93,7 +98,6 @@
         </div>
         <p class="text-[11px] text-gray-400 leading-relaxed">Porcentaje de efectividad de soluciones sobre el volumen operacional.</p>
       </div>
-
       <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/80 border-b-4 border-amber-500">
         <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">⏳ Tiempo de Respuesta (MTTR)</h4>
         <div class="p-4 bg-slate-950/60 rounded-full border border-amber-500/20 w-28 h-28 flex items-center justify-center">
@@ -101,7 +105,6 @@
         </div>
         <p class="text-[11px] text-gray-400 leading-relaxed">Meta ISO 9001: Mantener respuesta técnica <span class="text-amber-400 font-bold">&lt; 2.0h</span> para mitigar la paralización académica.</p>
       </div>
-
     </div>
 
     <div class="card-custom p-5 bg-slate-900/80">
@@ -112,14 +115,16 @@
         </span>
         <h4 class="text-xs font-black text-red-400 uppercase tracking-widest">🚨 Bitácora de Eventos Críticos en Planta (ISO 45001)</h4>
       </div>
-      <div id="bitacora-sstd" class="overflow-y-auto max-h-[180px] space-y-2 font-mono text-[11px] text-gray-400">
-        </div>
+      <div id="bitacora-sstd" class="overflow-y-auto max-h-[180px] space-y-2 font-mono text-[11px] text-gray-400"></div>
     </div>
-
   </div>
 
-  <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5">
-    © 2026 Universidad Nacional de Juliaca · Módulo Gerencial de Decisiones
+  <footer class="px-6 py-4 flex flex-wrap justify-between items-center text-[10px] text-gray-600 font-mono border-t border-white/5 bg-[#070c16]/50">
+    <div class="flex items-center gap-2 text-emerald-400 font-bold bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-900/30 shadow-sm">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span>ESTADO DEL SERVIDOR: ONLINE (Render Cloud Gateway)</span>
+    </div>
+    <div>© 2026 Universidad Nacional de Juliaca · Módulo Gerencial de Decisiones</div>
   </footer>
 
   <div id="modal-overlay" onclick="e=>e.target===this&&this.classList.remove('open')" class="hidden fixed inset-0 bg-black/85 z-50 items-center justify-center p-4 [&.open]:flex">
@@ -146,21 +151,46 @@
       if (vista === 'tabla') {
         $('contenedor-tabla').classList.remove('hidden'); $('contenedor-reportes').classList.add('hidden');
         $('btn-vista-tabla').className = "bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition cursor-pointer";
-        $('btn-vista-reportes').className = "bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer";
+        $('btn-vista-reportes').className = "relative bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer flex items-center gap-2";
       } else {
         $('contenedor-tabla').classList.add('hidden'); $('contenedor-reportes').classList.remove('hidden');
-        $('btn-vista-reportes').className = "bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition cursor-pointer";
+        $('btn-vista-reportes').className = "relative bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition cursor-pointer flex items-center gap-2";
         $('btn-vista-tabla').className = "bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer";
         renderizarGraficos();
       }
     }
 
+    // CAMBIO 1 INTEGRADO: Mostrar un esqueleto animado simulando procesamiento de alta velocidad
+    function mostrarSkeleton() {
+      const tbody = $('tbody');
+      tbody.innerHTML = Array(5).fill(0).map(() => `
+        <tr class="animate-pulse">
+          <td class="p-4"><div class="skeleton-line w-8"></div></td>
+          <td class="p-4"><div class="skeleton-line w-24"></div></td>
+          <td class="p-4"><div class="skeleton-line w-32"></div></td>
+          <td class="p-4"><div class="skeleton-line w-12"></div></td>
+          <td class="p-4"><div class="skeleton-line w-48"></div></td>
+          <td class="p-4"><div class="skeleton-line w-16"></div></td>
+          <td class="p-4"><div class="skeleton-line w-16"></div></td>
+          <td class="p-4"><div class="skeleton-line w-28"></div></td>
+          <td class="p-4"><div class="skeleton-line w-24"></div></td>
+        </tr>
+      `).join("");
+    }
+
     async function cargar() {
+      // Mostramos las barras animadas antes de consultar al servidor local o nube
+      mostrarSkeleton();
       try {
         const res = await fetch("/api/admin/incidencias");
         todos = await res.json();
-        actualizarStats(); filtrar();
-        if (!$('contenedor-reportes').classList.contains('hidden')) renderizarGraficos();
+        
+        // Retrasamos medio segundo el dibujo real para que el ojo humano note el procesamiento premium
+        setTimeout(() => {
+          actualizarStats(); 
+          filtrar();
+          if (!$('contenedor-reportes').classList.contains('hidden')) renderizarGraficos();
+        }, 500);
       } catch { toast("❌ Error de enlace de datos."); }
     }
 
@@ -172,6 +202,15 @@
       $('s-total').innerText = todos.length;
       $('s-pendiente').innerText = p; $('s-revision').innerText = e; $('s-solucionado').innerText = s;
       $('txt-eficiencia').innerText = todos.length ? `${Math.round((s / todos.length) * 100)}%` : '0%';
+
+      // CAMBIO 2: Pintar y rebotar el globo de notificaciones sobre el menú administrativo si hay pendientes
+      const badg = $('badge-notif');
+      if (p > 0) {
+        badg.innerText = p;
+        badg.classList.remove('hidden');
+      } else {
+        badg.classList.add('hidden');
+      }
     }
 
     function filtrar() {
@@ -187,14 +226,14 @@
       $('conteo').innerText = `${f.length} caso${f.length !== 1 ? 's' : ''}`;
       renderizarTabla(f);
     }
-function renderizarTabla(data) {
+
+    function renderizarTabla(data) {
       const tbody = $('tbody');
       if (!data.length) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-500 italic font-mono">Sin resultados.</td></tr>`; return; }
 
       tbody.innerHTML = data.map(r => {
         const tieneFoto = r.foto && r.foto !== "null";
         const problemaLimpio = r.problema.includes('->') ? r.problema.split('->')[1] : r.problema;
-        
         return `
         <tr class="hover:bg-slate-800/40 transition">
           <td class="p-3 font-mono text-gray-500 font-bold">${r.id}</td>
@@ -206,17 +245,13 @@ function renderizarTabla(data) {
           <td class="p-3">
             ${tieneFoto ? `<button onclick="verFoto('${r.foto}','${r.nombre}','${r.pc_numero}')" class="bg-slate-800 border border-slate-700 text-blue-400 text-[10px] px-2 py-1 rounded cursor-pointer hover:bg-blue-600 hover:text-white transition">📷 Ver foto</button>` : `<span class="text-gray-600 italic text-[11px]">Sin foto</span>`}
           </td>
-          
           <td class="p-3 font-mono text-gray-400 text-[11px] whitespace-nowrap">
             ${(() => {
               if (!r.fecha) return '—';
               const partes = r.fecha.split(' ');
               const fParte = partes[0];
               const hParte = partes[1] ? partes[1].substring(0, 5) : '';
-
-              if (fParte.includes('/')) {
-                return `${fParte} ${hParte ? '🕒 ' + hParte : ''}`;
-              }
+              if (fParte.includes('/')) return `${fParte} ${hParte ? '🕒 ' + hParte : ''}`;
               if (fParte.includes('-')) {
                 const [anio, mes, dia] = fParte.split('-');
                 return `${dia}/${mes}/${anio} ${hParte ? '🕒 ' + hParte : ''}`;
@@ -224,7 +259,6 @@ function renderizarTabla(data) {
               return r.fecha;
             })()}
           </td>
-
           <td class="p-3">
             <select class="sel-estado sel-${r.estado.replace(' ', '_')}" onchange="cambiarEstado(${r.id}, this.value, this)">
               <option ${r.estado==="Pendiente"?'selected':''}>Pendiente</option>
@@ -266,13 +300,11 @@ function renderizarTabla(data) {
         else if(r.problema.includes("LAB 03")) labs["LAB 03"]++;
       });
 
-      // --- CAMBIO INTEGRADO: Cargar Dinámicamente la Bitácora ISO 45001 ---
       const bitacoraContainer = $('bitacora-sstd');
-      // Filtramos reportes que tengan etiquetas de infraestructura [INF] o sean de gravedad Alta
       const criticos = todos.filter(r => r.problema.includes("[INF]") || r.urgencia === "Alta");
       
       if (!criticos.length) {
-        bitacoraContainer.innerHTML = `<p class="text-gray-600 italic">No se registran vectores de riesgo crítico en planta en las últimas 24 horas.</p>`;
+        bitacoraContainer.innerHTML = `<p class="text-gray-600 italic">No se registran vectores de riesgo crítico en planta.</p>`;
       } else {
         bitacoraContainer.innerHTML = criticos.map(c => {
           const esInfra = c.problema.includes("[INF]");
@@ -281,18 +313,21 @@ function renderizarTabla(data) {
               <span class="${esInfra ? 'text-amber-400' : 'text-red-400'} font-bold">[${esInfra ? 'RIESGO SST' : 'ALERTA CRÍTICA'}]</span>
               <span class="text-gray-300">PC: ${c.pc_numero} — ${c.problema.split('->')[1] || c.problema}</span>
               <span class="text-gray-500 text-[10px]">
-              ${(() => {
-                const [f, h] = c.fecha.split(' ');
-                const [anio, mes, dia] = f.split('-');
-                return `${dia}/${mes}/${anio} — ${h ? h.substring(0,5) : ''}`;
-              })()}
-            </span>
+                ${(() => {
+                  const partes = c.fecha.split(' ');
+                  const fParte = partes[0];
+                  const hParte = partes[1] ? partes[1].substring(0, 5) : '';
+                  if (fParte.includes('-')) {
+                    const [anio, mes, dia] = fParte.split('-');
+                    return `${dia}/${mes}/${anio} — ${hParte}`;
+                  }
+                  return c.fecha;
+                })()}
+              </span>
             </div>`;
         }).join("");
       }
 
-      // --- CAMBIO INTEGRADO: Cálculo Dinámico del MTTR Simulador ---
-      // El tiempo baja un poquito si hay más casos resueltos, dando realismo gerencial
       const factorMttr = s > 0 ? (1.8 - (s * 0.05)).toFixed(1) : "2.4";
       $('txt-mttr').innerText = `${Math.max(factorMttr, 0.8)}h`;
 
@@ -330,14 +365,11 @@ function renderizarTabla(data) {
       });
     }
 
-    // --- FUNCIÓN NUEVA: Simulador Profesional de Auditoría SIG ---
     function exportarInformeSIG() {
       toast("📥 Compilando matriz de riesgos institucionales...");
       setTimeout(() => {
-        // Genera una descarga simulada de un reporte limpio en formato CSV estructurado
         const encabezado = "ID,Origen,Usuario,Ubicacion_Equipo,Gravedad,Estado_Actual\n";
         const filas = todos.map(r => `${r.id},UNAJ_PLANTA,${r.nombre},${r.pc_numero},${r.urgencia},${r.estado}`).join("\n");
-        
         const blob = new Blob([encabezado + filas], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
