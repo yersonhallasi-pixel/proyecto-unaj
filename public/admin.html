@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Incidencias UNAJ</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --azul:#003087; --oro:#F5A800; --oscuro:#0a0f1e; --card:#111827; --borde:#1f2937; }
+    * { box-sizing:border-box; }
+    body { font-family:'IBM Plex Sans',sans-serif; background:var(--oscuro); color:#e5e7eb; min-height:100vh; }
+    .mono { font-family:'IBM Plex Mono',monospace; }
+
+    /* Header */
+    header { background:#0d1524; border-bottom:3px solid var(--oro); }
+
+    /* Stat cards */
+    .stat { background:var(--card); border:1px solid var(--borde); border-radius:10px; padding:16px 20px; }
+    .stat-num { font-size:2rem; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+
+    /* Tabla */
+    .tbl-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--borde); }
+    table { border-collapse:collapse; width:100%; min-width:900px; }
+    thead th { background:#0d1524; color:#9ca3af; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; padding:12px 14px; text-align:left; border-bottom:1px solid var(--borde); }
+    tbody tr { border-bottom:1px solid var(--borde); transition:background .15s; }
+    tbody tr:hover { background:#1a2235; }
+    tbody td { padding:11px 14px; font-size:.85rem; vertical-align:middle; }
+
+    /* Badges urgencia */
+    .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.72rem; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+    .u-Alta   { background:#450a0a; color:#fca5a5; }
+    .u-Media  { background:#451a03; color:#fcd34d; }
+    .u-Baja   { background:#052e16; color:#86efac; }
+
+    /* Select estado */
+    .sel-estado {
+      border-radius:6px; padding:4px 8px; font-size:.8rem; font-weight:600;
+      border:1px solid var(--borde); cursor:pointer; outline:none;
+      transition:border-color .2s;
+    }
+    .sel-estado:focus { border-color:var(--oro); }
+    .sel-Pendiente    { background:#1e1b4b; color:#a5b4fc; }
+    .sel-En_Revision  { background:#292524; color:#fcd34d; }
+    .sel-Solucionado  { background:#052e16; color:#86efac; }
+
+    /* Botón ver foto */
+    .btn-foto { background:#1e293b; border:1px solid #334155; color:#93c5fd; font-size:.75rem; padding:4px 10px; border-radius:6px; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .btn-foto:hover { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
+    .btn-foto.sin-foto { color:#4b5563; border-color:#374151; cursor:default; }
+    .btn-foto.sin-foto:hover { background:#1e293b; color:#4b5563; border-color:#374151; }
+
+    /* Modal foto */
+    #modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:1000; align-items:center; justify-content:center; }
+    #modal-overlay.open { display:flex; }
+    #modal-box { background:#111827; border:1px solid var(--borde); border-radius:14px; padding:20px; max-width:520px; width:90%; }
+    #modal-box img { width:100%; border-radius:8px; max-height:420px; object-fit:contain; background:#000; }
+
+    /* Filtro / buscador */
+    .input-dark { background:#111827; border:1px solid var(--borde); border-radius:7px; padding:7px 12px; font-size:.85rem; color:#e5e7eb; outline:none; transition:border-color .2s; }
+    .input-dark:focus { border-color:var(--oro); }
+
+    /* Toast */
+    #toast { position:fixed; bottom:22px; right:22px; padding:11px 18px; border-radius:9px; font-weight:600; font-size:.88rem; box-shadow:0 4px 16px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .3s,transform .3s; transform:translateY(10px); z-index:2000; }
+    #toast.show { opacity:1; transform:translateY(0); }
+    #toast.ok  { background:#166534; color:#fff; }
+    #toast.err { background:#7f1d1d; color:#fca5a5; }
+
+    /* Loading spinner */
+    .spin { display:inline-block; width:16px; height:16px; border:2px solid #374151; border-top-color:var(--oro); border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <p class="mono text-xs text-yellow-400 tracking-widest uppercase">UNAJ · Área de Software</p>
+      <h1 class="text-xl font-bold text-white mt-0.5">🛠 Panel de Administración — Incidencias</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="cargar()" id="btn-reload"
+        class="mono text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg transition">
+        ↻ Actualizar
+      </button>
+      <a href="/" class="mono text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-400 px-3 py-2 rounded-lg transition">
+        ← Formulario alumno
+      </a>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="max-w-7xl mx-auto px-4 pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="stat">
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total</p>
+      <p class="stat-num text-white" id="s-total">—</p>
+    </div>
+    <div class="stat">
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Pendientes</p>
+      <p class="stat-num text-indigo-400" id="s-pendiente">—</p>
+    </div>
+    <div class="stat">
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">En Revisión</p>
+      <p class="stat-num text-yellow-400" id="s-revision">—</p>
+    </div>
+    <div class="stat">
+      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Solucionados</p>
+      <p class="stat-num text-green-400" id="s-solucionado">—</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="max-w-7xl mx-auto px-4 pt-5 flex flex-wrap gap-3 items-center">
+    <input class="input-dark w-56" type="text" id="buscar" placeholder="🔍 Buscar nombre, PC, problema…" oninput="filtrar()" />
+    <select class="input-dark" id="filtro-estado" onchange="filtrar()">
+      <option value="">Todos los estados</option>
+      <option>Pendiente</option>
+      <option>En Revisión</option>
+      <option>Solucionado</option>
+    </select>
+    <select class="input-dark" id="filtro-urgencia" onchange="filtrar()">
+      <option value="">Toda urgencia</option>
+      <option>Alta</option>
+      <option>Media</option>
+      <option>Baja</option>
+    </select>
+    <span id="conteo" class="mono text-xs text-gray-500 ml-auto"></span>
+  </div>
+
+  <!-- Tabla -->
+  <div class="max-w-7xl mx-auto px-4 py-5 pb-16">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Alumno</th>
+            <th>Correo</th>
+            <th>PC</th>
+            <th>Problema</th>
+            <th>Urgencia</th>
+            <th>Foto</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="9" class="text-center py-10 text-gray-600">
+            <span class="spin"></span>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal foto -->
+  <div id="modal-overlay" onclick="cerrarModal(event)">
+    <div id="modal-box">
+      <div class="flex justify-between items-center mb-3">
+        <p class="font-semibold text-white" id="modal-titulo">Foto de evidencia</p>
+        <button onclick="document.getElementById('modal-overlay').classList.remove('open')"
+          class="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+      </div>
+      <img id="modal-img" src="" alt="Evidencia" />
+      <p class="mono text-xs text-gray-500 mt-2 text-center" id="modal-info"></p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    let todos = [];
+
+    /* Toast */
+    function toast(msg, tipo = "ok") {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.className = `show ${tipo}`;
+      setTimeout(() => { t.className = ""; }, 3000);
+    }
+
+    /* Cargar datos */
+    async function cargar() {
+      document.getElementById("btn-reload").textContent = "…";
+      try {
+        const res = await fetch("/api/admin/incidencias");
+        todos = await res.json();
+        actualizarStats();
+        filtrar();
+      } catch {
+        toast("Error al conectar con el servidor.", "err");
+      } finally {
+        document.getElementById("btn-reload").textContent = "↻ Actualizar";
+      }
+    }
+
+    /* Stats */
+    function actualizarStats() {
+      document.getElementById("s-total").textContent       = todos.length;
+      document.getElementById("s-pendiente").textContent   = todos.filter(r => r.estado === "Pendiente").length;
+      document.getElementById("s-revision").textContent    = todos.filter(r => r.estado === "En Revisión").length;
+      document.getElementById("s-solucionado").textContent = todos.filter(r => r.estado === "Solucionado").length;
+    }
+
+    /* Filtrar */
+    function filtrar() {
+      const q   = document.getElementById("buscar").value.toLowerCase();
+      const est = document.getElementById("filtro-estado").value;
+      const urg = document.getElementById("filtro-urgencia").value;
+
+      const filtrados = todos.filter(r => {
+        const texto = `${r.nombre} ${r.apellido} ${r.pc_numero} ${r.problema}`.toLowerCase();
+        return (!q   || texto.includes(q))
+            && (!est || r.estado === est)
+            && (!urg || r.urgencia === urg);
+      });
+
+      document.getElementById("conteo").textContent = `${filtrados.length} registro${filtrados.length !== 1 ? "s" : ""}`;
+      renderizar(filtrados);
+    }
+
+    /* Renderizar tabla */
+    function renderizar(data) {
+      const tbody = document.getElementById("tbody");
+
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-600 italic">Sin resultados.</td></tr>`;
+        return;
+      }
+
+      const urgClass = { Alta:"u-Alta", Media:"u-Media", Baja:"u-Baja" };
+      const selClass = { "Pendiente":"sel-Pendiente", "En Revisión":"sel-En_Revision", "Solucionado":"sel-Solucionado" };
+
+      tbody.innerHTML = data.map(r => {
+        const tieneFoto = r.foto && r.foto !== "null";
+        return `
+        <tr>
+          <td class="mono text-gray-500">${r.id}</td>
+          <td>
+            <p class="font-semibold text-white">${r.nombre} ${r.apellido}</p>
+          </td>
+          <td class="mono text-xs text-gray-400">${r.correo}</td>
+          <td class="mono font-bold text-yellow-300">${r.pc_numero}</td>
+          <td class="text-gray-300">${r.problema}</td>
+          <td><span class="badge ${urgClass[r.urgencia]||''}">${r.urgencia}</span></td>
+          <td>
+            ${tieneFoto
+              ? `<button class="btn-foto" onclick="verFoto('${r.foto}','${r.nombre} ${r.apellido}','${r.pc_numero}')">📷 Ver foto</button>`
+              : `<span class="btn-foto sin-foto">Sin foto</span>`
+            }
+          </td>
+          <td class="mono text-xs text-gray-500">${r.fecha}</td>
+          <td>
+            <select class="sel-estado ${selClass[r.estado]||''}"
+              onchange="cambiarEstado(${r.id}, this.value, this)"
+              data-id="${r.id}">
+              <option ${r.estado==="Pendiente"    ? "selected":""}>Pendiente</option>
+              <option ${r.estado==="En Revisión"  ? "selected":""}>En Revisión</option>
+              <option ${r.estado==="Solucionado"  ? "selected":""}>Solucionado</option>
+            </select>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    /* Cambiar estado */
+    async function cambiarEstado(id, nuevo_estado, selectEl) {
+      selectEl.disabled = true;
+      try {
+        const res = await fetch("/api/incidencias/cambiar-estado", {
+          method:  "POST",
+          headers: { "Content-Type":"application/json" },
+          body:    JSON.stringify({ id, nuevo_estado }),
+        });
+        if (!res.ok) throw new Error();
+
+        // Actualizar en memoria
+        const reg = todos.find(r => r.id === id);
+        if (reg) reg.estado = nuevo_estado;
+
+        actualizarStats();
+
+        // Actualizar clase del select
+        const map = { "Pendiente":"sel-Pendiente", "En Revisión":"sel-En_Revision", "Solucionado":"sel-Solucionado" };
+        selectEl.className = `sel-estado ${map[nuevo_estado]||""}`;
+
+        toast(`✅ Estado actualizado → ${nuevo_estado}`);
+      } catch {
+        toast("❌ Error al cambiar el estado.", "err");
+      } finally {
+        selectEl.disabled = false;
+      }
+    }
+
+    /* Modal foto */
+    function verFoto(filename, alumno, pc) {
+      document.getElementById("modal-img").src    = `/uploads/${filename}`;
+      document.getElementById("modal-titulo").textContent = `Foto de evidencia`;
+      document.getElementById("modal-info").textContent   = `${alumno} · ${pc}`;
+      document.getElementById("modal-overlay").classList.add("open");
+    }
+    function cerrarModal(e) {
+      if (e.target === document.getElementById("modal-overlay"))
+        document.getElementById("modal-overlay").classList.remove("open");
+    }
+
+    /* Arrancar */
+    cargar();
+  </script>
+</body>
+</html>

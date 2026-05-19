@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Incidencias | UNAJ</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    :root { 
+      --azul: #003087; 
+      --azul-d: #001a4d;
+      --oro: #F5A800; 
+      --oscuro: #0a0f1e; 
+      --card: #111827; 
+      --borde: #1f2937; 
+    }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'IBM Plex Sans', sans-serif; 
+      background: var(--oscuro); 
+      color: #e5e7eb; 
+      min-height: 100vh; 
+      position: relative;
+    }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+
+    /* Fondo institucional cuadriculado compartido para todo el sistema */
+    .bg-pattern {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-color: var(--oscuro);
+      background-image: 
+        linear-gradient(rgba(245, 168, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 168, 0, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    /* Tarjetas estilo Glassmorphism */
+    .card-custom {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--borde);
+      border-radius: 14px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    /* Stat cards */
+    .stat { background: var(--card); border: 1px solid var(--borde); border-radius: 10px; padding: 16px 20px; }
+    .stat-num { font-size: 2rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+
+    /* Tabla */
+    .tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--borde); background: var(--card); }
+    table { border-collapse: collapse; width: 100%; min-width: 900px; }
+    thead th { background: #0d1524; color: #9ca3af; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--borde); }
+    tbody tr { border-bottom: 1px solid var(--borde); transition: background .15s; }
+    tbody tr:hover { background: #1a2235; }
+    tbody td { padding: 11px 14px; font-size: .85rem; vertical-align: middle; }
+
+    /* Badges urgencia */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+    .u-Alta   { background: #450a0a; color: #fca5a5; }
+    .u-Media  { background: #451a03; color: #fcd34d; }
+    .u-Baja   { background: #052e16; color: #86efac; }
+
+    /* Select estado */
+    .sel-estado {
+      border-radius: 6px; padding: 4px 8px; font-size: .8rem; font-weight: 600;
+      border: 1px solid var(--borde); cursor: pointer; outline: none;
+      transition: border-color .2s;
+    }
+    .sel-estado:focus { border-color: var(--oro); }
+    .sel-Pendiente    { background: #1e1b4b; color: #a5b4fc; }
+    .sel-En_Revision  { background: #292524; color: #fcd34d; }
+    .sel-Solucionado  { background: #052e16; color: #86efac; }
+
+    /* Botón ver foto */
+    .btn-foto { background: #1e293b; border: 1px solid #334155; color: #93c5fd; font-size: .75rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: background .15s; white-space: nowrap; }
+    .btn-foto:hover { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+    .btn-foto.sin-foto { color: #4b5563; border-color: #374151; cursor: default; }
+    .btn-foto.sin-foto:hover { background: #1e293b; color: #4b5563; border-color: #374151; }
+
+    /* Modales */
+    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 1000; align-items: center; justify-content: center; }
+    #modal-overlay.open { display: flex; }
+    #modal-box { background: #111827; border: 1px solid var(--borde); border-radius: 14px; padding: 20px; max-width: 520px; width: 90%; }
+    #modal-box img { width: 100%; border-radius: 8px; max-height: 420px; object-fit: contain; background: #000; }
+
+    .input-dark { background: #111827; border: 1px solid var(--borde); border-radius: 7px; padding: 7px 12px; font-size: .85rem; color: #e5e7eb; outline: none; transition: border-color .2s; }
+    .input-dark:focus { border-color: var(--oro); }
+
+    #toast { position: fixed; bottom: 22px; right: 22px; padding: 11px 18px; border-radius: 9px; font-weight: 600; font-size: .88rem; box-shadow: 0 4px 16px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; transform: translateY(10px); z-index: 2000; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.ok  { background: #166534; color: #fff; }
+    #toast.err { background: #7f1d1d; color: #fca5a5; }
+
+    .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid #374151; border-top-color: var(--oro); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="bg-pattern"></div>
+
+  <div id="section-login" class="flex flex-col items-center justify-center min-h-screen py-12 px-4">
+    <div class="text-center mb-6">
+      <span class="mono text-xs font-bold tracking-widest text-[var(--oro)] uppercase bg-slate-900/80 px-4 py-1.5 rounded-full border border-[var(--oro)]/30">
+        • UNAJ · ÁREA DE SOFTWARE •
+      </span>
+    </div>
+
+    <div class="card-custom w-full max-w-md p-8">
+      <h2 class="text-2xl font-bold text-center tracking-tight text-white mb-1">Sistema de Incidencias</h2>
+      <p class="text-xs text-center text-gray-400 mb-6">Laboratorios de Cómputo</p>
+
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl mb-6 border border-white/5">
+        <button id="tab-alumno" onclick="switchTab('alumno')" class="py-2.5 text-xs font-bold rounded-lg transition-all bg-[var(--oro)] text-black shadow-md">
+          👨‍🎓 Alumno
+        </button>
+        <button id="tab-admin" onclick="switchTab('admin')" class="py-2.5 text-xs font-bold rounded-lg transition-all text-gray-400 hover:text-white">
+          🛠️ Administrador
+        </button>
+      </div>
+
+      <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+        <div id="group-nombre">
+          <label class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Nombre Completo</label>
+          <input type="text" id="login-nombre" placeholder="Ej: Juan Quispe" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
+        </div>
+        
+        <div>
+          <label id="label-identificador" class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Correo Institucional</label>
+          <input type="text" id="login-identificador" placeholder="usuario@unaj.edu.pe" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="w-full bg-[var(--oro)] hover:bg-yellow-400 text-black font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl cursor-pointer transition-all active:scale-[0.98]">
+          Ingresar como Alumno →
+        </button>
+      </form>
+    </div>
+  </div>
+
+ <div id="section-alumno" class="hidden max-w-[1600px] mx-auto px-4 py-6">
+    
+    <header class="p-5 card-custom mb-6 flex flex-wrap items-center justify-between gap-4 border-l-4 border-[var(--oro)]">
+      <div class="flex items-center gap-3">
+        <div class="text-2xl">👨‍🎓</div>
+        <div>
+          <p class="mono text-[10px] text-yellow-400 tracking-widest uppercase font-bold">UNAJ · Sistema Operativo de Planta</p>
+          <h1 class="text-lg font-black text-white tracking-tight">Portal de Reportes del Estudiante</h1>
+          <p class="text-xs text-gray-400 mt-0.5">Sesión: <span id="user-display-alumno" class="font-mono text-amber-300"></span></p>
+        </div>
+      </div>
+      <button onclick="logout()" class="mono text-xs text-red-400 hover:text-white bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 px-4 py-2 rounded-xl transition cursor-pointer font-bold">
+        ✕ Cerrar Sesión
+      </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6">
+      
+      <div class="md:col-span-1 lg:col-span-3 space-y-4">
+        <div class="card-custom p-5 space-y-4">
+          <h3 class="text-xs font-black tracking-wider text-yellow-400 uppercase border-b border-white/5 pb-2">📚 Protocolo SIG</h3>
+          <div class="space-y-3 text-xs text-gray-300">
+            <div class="p-3 bg-red-950/20 border border-red-900/20 rounded-xl">
+              <span class="font-bold text-red-400 block mb-1">💻 Hardware (HW)</span>
+              Aplica a componentes físicos: pantallas con líneas, periféricos rotos, fallas de energía o puertos dañados.
+            </div>
+            <div class="p-3 bg-blue-950/20 border border-blue-900/20 rounded-xl">
+              <span class="font-bold text-blue-400 block mb-1">⚙️ Software (SW)</span>
+              Sistemas congelados, pantallazos azules, falta de entornos de desarrollo o almacenamiento lleno.
+            </div>
+            <div class="p-3 bg-amber-950/20 border border-amber-900/20 rounded-xl">
+              <span class="font-bold text-amber-400 block mb-1">🔌 Infraestructura (INF)</span>
+              Riesgos del entorno bajo norma ISO 45001: cables eléctricos expuestos o goteras en mesas.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:col-span-2 lg:col-span-5 card-custom p-6 space-y-5">
+        <h3 class="text-sm font-black tracking-wider text-white uppercase border-b border-white/5 pb-2 flex items-center gap-2">
+          <span class="text-[var(--oro)]">📝</span> Registrar Incidencia en Aula
+        </h3>
+        
+        <form id="form-reporte" onsubmit="handleReporte(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5 tracking-wide">Ubicación</label>
+              <select id="rep-lab" class="w-full input-dark py-2.5" required>
+                <option value="LAB 01 - Software">LAB 01 - Software</option>
+                <option value="LAB 02 - Redes">LAB 02 - Redes</option>
+                <option value="LAB 03 - General">LAB 03 - General</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5 tracking-wide">N.° de PC</label>
+              <input type="text" id="rep-pc" placeholder="Ej: PC-12" class="w-full input-dark py-2" required />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5 tracking-wide">Nivel de Gravedad Operativa</label>
+            <select id="rep-urgencia" class="w-full input-dark py-2.5 text-sm" onchange="actualizarAlertaUrgencia(this.value)" required>
+              <option value="Baja">Baja Recurrencia 🟢</option>
+              <option value="Media">Media — Requiere Soporte 🟡</option>
+              <option value="Alta">Crítica — Detiene Clase 🔴</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5 tracking-wide">Tipo de Problema Notado</label>
+            <select id="rep-problema" class="w-full input-dark py-2.5 text-sm" required>
+              <optgroup label="💻 COMPONENTES DE HARDWARE">
+                <option value="[HW] Pantalla dañada / Sin señal">[HW] Pantalla dañada / Sin señal</option>
+                <option value="[HW] CPU no enciende / Pitidos">[HW] CPU no enciende / Pitidos</option>
+                <option value="[HW] Teclado o Mouse inoperante">[HW] Teclado o Mouse inoperante</option>
+                <option value="[HW] Puerto USB físico dañado">[HW] Puerto USB físico dañado</option>
+              </optgroup>
+              <optgroup label="⚙️ SOFTWARE Y CONFIGURACIÓN">
+                <option value="[SW] Falta IDES (VS Code, Node, Python)">[SW] Falta IDES (VS Code, Node, Python)</option>
+                <option value="[SW] Bloqueo de Windows / Pantalla Azul">[SW] Bloqueo de Windows / Pantalla Azul</option>
+                <option value="[SW] Almacenamiento lleno en Disco C">[SW] Almacenamiento lleno en Disco C</option>
+              </optgroup>
+              <optgroup label="⚠️ INFRAESTRUCTURA Y SEGURIDAD">
+                <option value="[INF] Canaleta rota / Cables expuestos">[INF] Canaleta rota / Cables expuestos</option>
+                <option value="[INF] Conector de red RJ45 roto">[INF] Conector de red RJ45 roto</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div>
+       <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5 tracking-wide">Evidencia Fotográfica (Opcional)</label>
+<div class="border-2 border-dashed border-white/10 hover:border-[var(--oro)]/50 rounded-xl p-5 text-center transition bg-slate-950/40 relative group cursor-pointer">
+  <input type="file" id="rep-foto" accept="image/*" onchange="mostrarPreview(this)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />              <div id="drop-text" class="space-y-1">
+                <p class="text-sm text-gray-300 font-bold group-hover:text-[var(--oro)] transition-colors">📸 Subir o capturar evidencia</p>
+                <p class="text-[10px] text-gray-500">Formatos admitidos: JPG, PNG • Máximo 5MB</p>
+              </div>
+              <div id="preview-container" class="hidden mt-1 flex flex-col items-center gap-2">
+                <img id="preview-img" src="" class="h-24 object-contain rounded-lg border border-white/10 shadow-md" />
+                <span class="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">✓ Imagen cargada</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/50 border border-white/5 rounded-xl p-4 space-y-2.5">
+            <label class="flex items-start gap-2.5 text-xs text-gray-400 cursor-pointer select-none hover:text-gray-200">
+              <input type="checkbox" class="mt-0.5 rounded accent-[var(--oro)]" required />
+              <span>Declaración: He verificado las conexiones básicas antes de reportar.</span>
+            </label>
+            <label class="flex items-start gap-2.5 text-xs text-gray-400 cursor-pointer select-none hover:text-gray-200">
+              <input type="checkbox" class="mt-0.5 rounded accent-[var(--oro)]" required />
+              <span>Esta incidencia afecta de forma directa el avance de la sesión actual.</span>
+            </label>
+          </div>
+
+          <button type="submit" class="w-full bg-[var(--azul)] hover:bg-[var(--azul-m)] text-white font-bold py-3 rounded-xl transition cursor-pointer active:scale-[0.99] shadow-md shadow-blue-900/20">
+            Enviar Incidencia Registrada →
+          </button>
+        </form>
+      </div>
+
+      <div class="md:col-span-1 lg:col-span-4 card-custom p-5 space-y-4">
+        <h3 class="text-xs font-black tracking-wider text-yellow-400 uppercase border-b border-white/5 pb-2">📋 Mis Reportes Enviados</h3>
+        <div class="overflow-y-auto max-h-[500px] pr-1 space-y-3" id="lista-reportes-alumno">
+          </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="section-admin" class="hidden">
+    <header class="px-6 py-4 flex items-center justify-between gap-4 flex-wrap bg-[#0d1524] border-bottom border-yellow-500 border-b-[3px]">
+      <div>
+        <p class="mono text-xs text-yellow-400 tracking-widest uppercase">UNAJ · Área de Software</p>
+        <h1 class="text-xl font-bold text-white mt-0.5">🛠 Panel de Administración — Incidencias</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="cargar()" id="btn-reload" class="mono text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg transition">
+          ↻ Actualizar
+        </button>
+        <button onclick="logout()" class="mono text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-400 px-3 py-2 rounded-lg transition">
+          ← Salir del Sistema
+        </button>
+      </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="stat"><p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total</p><p class="stat-num text-white" id="s-total">—</p></div>
+      <div class="stat"><p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Pendientes</p><p class="stat-num text-indigo-400" id="s-pendiente">—</p></div>
+      <div class="stat"><p class="text-xs text-gray-400 uppercase tracking-wider mb-1">En Revisión</p><p class="stat-num text-yellow-400" id="s-revision">—</p></div>
+      <div class="stat"><p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Solucionados</p><p class="stat-num text-green-400" id="s-solucionado">—</p></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 pt-5 flex flex-wrap gap-3 items-center">
+      <input class="input-dark w-56" type="text" id="buscar" placeholder="🔍 Buscar nombre, PC, problema…" oninput="filtrar()" />
+      <select class="input-dark" id="filtro-estado" onchange="filtrar()">
+        <option value="">Todos los estados</option>
+        <option>Pendiente</option>
+        <option>En Revisión</option>
+        <option>Solucionado</option>
+      </select>
+      <select class="input-dark" id="filtro-urgencia" onchange="filtrar()">
+        <option value="">Toda urgencia</option>
+        <option>Alta</option>
+        <option>Media</option>
+        <option>Baja</option>
+      </select>
+      <span id="conteo" class="mono text-xs text-gray-500 ml-auto"></span>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-5 pb-16">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Alumno</th>
+              <th>Correo</th>
+              <th>PC</th>
+              <th>Problema</th>
+              <th>Urgencia</th>
+              <th>Foto</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-overlay" onclick="cerrarModal(event)">
+    <div id="modal-box">
+      <div class="flex justify-between items-center mb-3">
+        <p class="font-semibold text-white" id="modal-titulo">Foto de evidencia</p>
+        <button onclick="document.getElementById('modal-overlay').classList.remove('open')" class="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+      </div>
+      <img id="modal-img" src="" alt="Evidencia" />
+      <p class="mono text-xs text-gray-500 mt-2 text-center" id="modal-info"></p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    let currentRole = 'alumno';
+    let sessionUser = null;
+    let todos = [];
+
+    /* Toast integrado */
+    function toast(msg, tipo = "ok") {
+      const t = document.getElementById("toast");
+      t.textContent = msg; 
+      t.className = `show ${tipo === 'ok' ? 'ok' : 'err'}`;
+      setTimeout(() => { t.className = ""; }, 3000);
+    }
+
+    /* Pestañas Login (Ajustado para quitar el 'required' al Admin) */
+    function switchTab(role) {
+      currentRole = role;
+      const tAlumno = document.getElementById('tab-alumno');
+      const tAdmin = document.getElementById('tab-admin');
+      const gNombre = document.getElementById('group-nombre');
+      const inputNombre = document.getElementById('login-nombre');
+      const lIdentificador = document.getElementById('label-identificador');
+      const iIdentificador = document.getElementById('login-identificador');
+      const btnSubmit = document.getElementById('btn-login-submit');
+
+      if (role === 'alumno') {
+        tAlumno.className = "py-2.5 text-xs font-bold rounded-lg transition-all bg-[var(--oro)] text-black shadow-md";
+        tAdmin.className = "py-2.5 text-xs font-bold rounded-lg transition-all text-gray-400 hover:text-white";
+        gNombre.style.display = "block";
+        inputNombre.required = true; // Alumno sí necesita nombre
+        lIdentificador.innerText = "Correo Institucional";
+        iIdentificador.placeholder = "usuario@unaj.edu.pe";
+        iIdentificador.type = "text";
+        btnSubmit.innerText = "Ingresar como Alumno →";
+      } else {
+        tAdmin.className = "py-2.5 text-xs font-bold rounded-lg transition-all bg-[var(--oro)] text-black shadow-md";
+        tAlumno.className = "py-2.5 text-xs font-bold rounded-lg transition-all text-gray-400 hover:text-white";
+        gNombre.style.display = "none";
+        inputNombre.required = false; // ¡QUITAMOS el requerimiento para el Admin!
+        lIdentificador.innerText = "Clave de Acceso Admin";
+        iIdentificador.placeholder = "••••••••";
+        iIdentificador.type = "password";
+        btnSubmit.innerText = "Ingresar como Administrador →";
+      }
+    }
+
+    /* Autenticación dinámica local (CORREGIDA) */
+    function handleLogin(event) {
+      event.preventDefault();
+      
+      const sLogin = document.getElementById('section-login');
+      const sAlumno = document.getElementById('section-alumno');
+      const sAdmin = document.getElementById('section-admin');
+      const identificador = document.getElementById('login-identificador').value.trim();
+
+      if (currentRole === 'alumno') {
+        const nombre = document.getElementById('login-nombre').value;
+        sessionUser = { nombre, correo: identificador };
+        document.getElementById('user-display-alumno').innerText = `${nombre} (${identificador})`;
+        
+        sLogin.style.display = 'none';
+        sAdmin.style.display = 'none';
+        sAlumno.style.display = 'block';
+        cargarIncidenciasAlumno();
+        sAlumno.classList.remove('hidden');
+        toast("👋 Bienvenido al registro de incidencias.");
+      } else {
+        // Al ser Admin, ignoramos el campo de nombre y validamos la clave directo
+        if (identificador === 'admin' || identificador === 'admin123') {
+          sLogin.style.display = 'none';
+          sAlumno.style.display = 'none';
+          sAdmin.style.display = 'block';
+          sAdmin.classList.remove('hidden');
+          toast("🛠️ Panel de Control Administrador Activo");
+          cargar(); // Jala la base de datos de inmediato
+        } else {
+          toast("❌ Clave administrativa inválida.", "err");
+        }
+      }
+    }
+
+    async function handleReporte(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      
+      const labSeleccionado = document.getElementById('rep-lab').value;
+      const problemaBase = document.getElementById('rep-problema').value;
+
+      formData.append('nombre', sessionUser.nombre);
+      formData.append('apellido', 'Estudiante'); 
+      formData.append('correo', sessionUser.correo);
+      formData.append('pc_numero', document.getElementById('rep-pc').value);
+      formData.append('problema', `${labSeleccionado} -> ${problemaBase}`);
+      formData.append('urgencia', document.getElementById('rep-urgencia').value);
+      
+      const fotoFile = document.getElementById('rep-foto').files[0];
+      if (fotoFile) formData.append('foto', fotoFile);
+
+      try {
+        const response = await fetch('/api/reportar', { method: 'POST', body: formData });
+        if (response.ok) {
+          toast("✅ Incidencia guardada en el Servidor local.");
+          document.getElementById('form-reporte').reset();
+          document.getElementById('preview-container').classList.add('hidden');
+          document.getElementById('drop-text').classList.remove('hidden');
+          cargarIncidenciasAlumno(); // Actualiza la columna derecha de inmediato
+        } else {
+          toast("❌ Error al guardar datos.", "err");
+        }
+      } catch {
+        toast("❌ Sin conexión con la base de datos.", "err");
+      }
+    }
+
+    /* Muestra la miniatura de la foto en tiempo real */
+    function mostrarPreview(input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('preview-img').src = e.target.result;
+          document.getElementById('preview-container').classList.remove('hidden');
+          document.getElementById('drop-text').classList.add('hidden');
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    /* Alerta de urgencia */
+    function actualizarAlertaUrgencia(valor) {
+      if (valor === 'Alta') toast("⚠️ Urgencia Crítica seleccionada.", "err");
+    }
+
+    /* Carga el historial rápido en la columna derecha */
+    async function cargarIncidenciasAlumno() {
+      try {
+        const res = await fetch("/api/admin/incidencias");
+        const datos = await res.json();
+        const lista = document.getElementById("lista-reportes-alumno");
+        lista.innerHTML = "";
+
+        const misReportes = datos.filter(r => r.correo === sessionUser.correo);
+        if(!misReportes.length) {
+          lista.innerHTML = `<p class="text-xs text-gray-500 italic py-4 text-center">No has enviado reportes hoy.</p>`;
+          return;
+        }
+
+        const mapBadge = { Alta: "u-Alta", Media: "u-Media", Baja: "u-Baja" };
+
+        misReportes.forEach(r => {
+          lista.innerHTML += `
+            <div class="p-3 bg-slate-900/60 border border-white/5 rounded-xl text-xs space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-yellow-400 font-mono">${r.pc_numero}</span>
+                <span class="badge ${mapBadge[r.urgencia]||''}">${r.urgencia}</span>
+              </div>
+              <p class="text-gray-300 font-medium truncate">${r.problema}</p>
+              <div class="flex justify-between items-center text-[10px] text-gray-500 pt-1 border-t border-white/5">
+                <span>${r.fecha.split(' ')[1]}</span>
+                <span class="font-bold text-indigo-300 uppercase">${r.estado}</span>
+              </div>
+            </div>
+          `;
+        });
+      } catch { console.log("Error al cargar historial rápido."); }
+    }
+
+    /* Admin carga datos del backend */
+    async function cargar() {
+      const btn = document.getElementById("btn-reload");
+      if(btn) btn.textContent = "…";
+      try {
+        const res = await fetch("/api/admin/incidencias");
+        todos = await res.json();
+        actualizarStats();
+        filtrar();
+      } catch {
+        toast("Error al conectar con el servidor.", "err");
+      } finally {
+        if(btn) btn.textContent = "↻ Actualizar";
+      }
+    }
+
+    /* Admin actualiza indicadores */
+    function actualizarStats() {
+      document.getElementById("s-total").textContent       = todos.length;
+      document.getElementById("s-pendiente").textContent   = todos.filter(r => r.estado === "Pendiente").length;
+      document.getElementById("s-revision").textContent    = todos.filter(r => r.estado === "En Revisión").length;
+      document.getElementById("s-solucionado").textContent = todos.filter(r => r.estado === "Solucionado").length;
+    }
+
+    /* Admin aplica filtros en tiempo real */
+    function filtrar() {
+      const q   = document.getElementById("buscar").value.toLowerCase();
+      const est = document.getElementById("filtro-estado").value;
+      const urg = document.getElementById("filtro-urgencia").value;
+
+      const filtrados = todos.filter(r => {
+        const texto = `${r.nombre} ${r.apellido} ${r.pc_numero} ${r.problema}`.toLowerCase();
+        return (!q   || texto.includes(q))
+            && (!est || r.estado === est)
+            && (!urg || r.urgencia === urg);
+      });
+
+      document.getElementById("conteo").textContent = `${filtrados.length} registro${filtrados.length !== 1 ? "s" : ""}`;
+      renderizar(filtrados);
+    }
+
+    /* Admin renderiza filas de la tabla */
+    function renderizar(data) {
+      const tbody = document.getElementById("tbody");
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-600 italic">Sin resultados.</td></tr>`;
+        return;
+      }
+
+      const urgClass = { Alta: "u-Alta", Media: "u-Media", Baja: "u-Baja" };
+      const selClass = { "Pendiente": "sel-Pendiente", "En Revisión": "sel-En_Revision", "Solucionado": "sel-Solucionado" };
+
+      tbody.innerHTML = data.map(r => {
+        const tieneFoto = r.foto && r.foto !== "null";
+        return `
+        <tr>
+          <td class="mono text-gray-500">${r.id}</td>
+          <td><p class="font-semibold text-white">${r.nombre} ${r.apellido}</p></td>
+          <td class="mono text-xs text-gray-400">${r.correo}</td>
+          <td class="mono font-bold text-yellow-300">${r.pc_numero}</td>
+          <td class="text-gray-300">${r.problema}</td>
+          <td><span class="badge ${urgClass[r.urgencia]||''}">${r.urgencia}</span></td>
+          <td>
+            ${tieneFoto
+              ? `<button class="btn-foto" onclick="verFoto('${r.foto}','${r.nombre} ${r.apellido}','${r.pc_numero}')">📷 Ver foto</button>`
+              : `<span class="btn-foto sin-foto">Sin foto</span>`
+            }
+          </td>
+          <td class="mono text-xs text-gray-500">${r.fecha}</td>
+          <td>
+            <select class="sel-estado ${selClass[r.estado]||''}" onchange="cambiarEstado(${r.id}, this.value, this)">
+              <option ${r.estado==="Pendiente"    ? "selected":""}>Pendiente</option>
+              <option ${r.estado==="En Revisión"  ? "selected":""}>En Revisión</option>
+              <option ${r.estado==="Solucionado"  ? "selected":""}>Solucionado</option>
+            </select>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    /* Admin actualiza estado del registro en BD */
+    async function cambiarEstado(id, nuevo_estado, selectEl) {
+      selectEl.disabled = true;
+      try {
+        const res = await fetch("/api/incidencias/cambiar-estado", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ id, nuevo_estado }),
+        });
+        if (!res.ok) throw new Error();
+
+        const reg = todos.find(r => r.id === id);
+        if (reg) reg.estado = nuevo_estado;
+
+        actualizarStats();
+        const map = { "Pendiente": "sel-Pendiente", "En Revisión": "sel-En_Revision", "Solucionado": "sel-Solucionado" };
+        selectEl.className = `sel-estado ${map[nuevo_estado]||""}`;
+
+        toast(`✅ Estado actualizado → ${nuevo_estado}`);
+      } catch {
+        toast("❌ Error al cambiar el estado.", "err");
+      } finally {
+        selectEl.disabled = false;
+      }
+    }
+
+    /* Visor modal */
+    function verFoto(filename, alumno, pc) {
+      document.getElementById("modal-img").src = `/uploads/${filename}`;
+      document.getElementById("modal-titulo").textContent = `Foto de evidencia`;
+      document.getElementById("modal-info").textContent = `${alumno} · ${pc}`;
+      document.getElementById("modal-overlay").classList.add("open");
+    }
+    
+    function cerrarModal(e) {
+      if (e.target === document.getElementById("modal-overlay"))
+        document.getElementById("modal-overlay").classList.remove("open");
+    }
+
+    /* Cierre de sesión */
+    function logout() {
+      sessionUser = null;
+      document.getElementById('form-login').reset();
+      document.getElementById('section-alumno').style.display = 'none';
+      document.getElementById('section-admin').style.display = 'none';
+      
+      const sLogin = document.getElementById('section-login');
+      sLogin.style.display = 'flex';
+      sLogin.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
