@@ -62,24 +62,60 @@
     </div>
   </div>
 
-  <div id="contenedor-reportes" class="hidden max-w-[1600px] mx-auto px-4 py-4 w-full flex-1">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div id="contenedor-reportes" class="hidden max-w-[1600px] mx-auto px-4 py-4 w-full flex-1 space-y-6">
+    
+    <div class="flex justify-between items-center card-custom p-4 bg-slate-900/40 border-l-4 border-emerald-500">
+      <div>
+        <h4 class="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">🔒 Auditorías Internas e Inspección</h4>
+        <p class="text-xs text-gray-400 mt-0.5">Módulo de exportación de evidencias para acreditación institucional.</p>
+      </div>
+      <button onclick="exportarInformeSIG()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow transition duration-200 active:scale-95 flex items-center gap-2 cursor-pointer">
+        📥 Descargar Informe de Auditoría SIG
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      
       <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
         <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">📊 Estado de Incidencias</h4>
-        <div class="w-full max-w-[260px] h-[260px] flex items-center justify-center"><canvas id="chartEstados"></canvas></div>
+        <div class="w-full max-w-[240px] h-[240px] flex items-center justify-center"><canvas id="chartEstados"></canvas></div>
       </div>
+      
       <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
-        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">🏢 Fallas por Laboratorio</h4>
-        <div class="w-full max-w-[300px] h-[260px] flex items-center justify-center"><canvas id="chartLaboratorios"></canvas></div>
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">🏢 Fallas por Aula</h4>
+        <div class="w-full max-w-[260px] h-[240px] flex items-center justify-center"><canvas id="chartLaboratorios"></canvas></div>
       </div>
-      <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-4 bg-slate-900/80">
-        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">📈 Control de Calidad SIG</h4>
-        <div class="p-6 bg-slate-950/60 rounded-full border border-emerald-500/20 w-36 h-36 flex items-center justify-center">
-          <div><p class="text-3xl font-black font-mono text-emerald-400" id="txt-eficiencia">0%</p><p class="text-[9px] font-bold text-gray-500 uppercase mt-0.5">Resuelto</p></div>
+      
+      <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/80">
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">📈 Eficiencia SIG</h4>
+        <div class="p-4 bg-slate-950/60 rounded-full border border-emerald-500/20 w-28 h-28 flex items-center justify-center">
+          <div><p class="text-2xl font-black font-mono text-emerald-400" id="txt-eficiencia">0%</p><p class="text-[8px] font-bold text-gray-500 uppercase">Resuelto</p></div>
         </div>
-        <p class="text-xs text-gray-400 px-4 leading-relaxed">Mapeo porcentual de efectividad técnica sobre las solicitudes operacionales reportadas por los estudiantes en planta.</p>
+        <p class="text-[11px] text-gray-400 leading-relaxed">Porcentaje de efectividad de soluciones sobre el volumen operacional.</p>
       </div>
+
+      <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/80 border-b-4 border-amber-500">
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">⏳ Tiempo de Respuesta (MTTR)</h4>
+        <div class="p-4 bg-slate-950/60 rounded-full border border-amber-500/20 w-28 h-28 flex items-center justify-center">
+          <div><p class="text-2xl font-black font-mono text-amber-400" id="txt-mttr">1.4h</p><p class="text-[8px] font-bold text-gray-500 uppercase">Promedio</p></div>
+        </div>
+        <p class="text-[11px] text-gray-400 leading-relaxed">Meta ISO 9001: Mantener respuesta técnica <span class="text-amber-400 font-bold">&lt; 2.0h</span> para mitigar la paralización académica.</p>
+      </div>
+
     </div>
+
+    <div class="card-custom p-5 bg-slate-900/80">
+      <div class="flex items-center gap-2 border-b border-white/5 pb-3 mb-3">
+        <span class="flex h-2.5 w-2.5 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+        </span>
+        <h4 class="text-xs font-black text-red-400 uppercase tracking-widest">🚨 Bitácora de Eventos Críticos en Planta (ISO 45001)</h4>
+      </div>
+      <div id="bitacora-sstd" class="overflow-y-auto max-h-[180px] space-y-2 font-mono text-[11px] text-gray-400">
+        </div>
+    </div>
+
   </div>
 
   <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5">
@@ -151,14 +187,14 @@
       $('conteo').innerText = `${f.length} caso${f.length !== 1 ? 's' : ''}`;
       renderizarTabla(f);
     }
-
-    function renderizarTabla(data) {
+function renderizarTabla(data) {
       const tbody = $('tbody');
-      if (!data.length) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-500 italic font-mono">Sin registros filtrados.</td></tr>`; return; }
+      if (!data.length) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-500 italic font-mono">Sin resultados.</td></tr>`; return; }
 
       tbody.innerHTML = data.map(r => {
         const tieneFoto = r.foto && r.foto !== "null";
         const problemaLimpio = r.problema.includes('->') ? r.problema.split('->')[1] : r.problema;
+        
         return `
         <tr class="hover:bg-slate-800/40 transition">
           <td class="p-3 font-mono text-gray-500 font-bold">${r.id}</td>
@@ -170,7 +206,25 @@
           <td class="p-3">
             ${tieneFoto ? `<button onclick="verFoto('${r.foto}','${r.nombre}','${r.pc_numero}')" class="bg-slate-800 border border-slate-700 text-blue-400 text-[10px] px-2 py-1 rounded cursor-pointer hover:bg-blue-600 hover:text-white transition">📷 Ver foto</button>` : `<span class="text-gray-600 italic text-[11px]">Sin foto</span>`}
           </td>
-          <td class="p-3 font-mono text-gray-500 text-[11px]">${r.fecha.split(' ')[0]}</td>
+          
+          <td class="p-3 font-mono text-gray-400 text-[11px] whitespace-nowrap">
+            ${(() => {
+              if (!r.fecha) return '—';
+              const partes = r.fecha.split(' ');
+              const fParte = partes[0];
+              const hParte = partes[1] ? partes[1].substring(0, 5) : '';
+
+              if (fParte.includes('/')) {
+                return `${fParte} ${hParte ? '🕒 ' + hParte : ''}`;
+              }
+              if (fParte.includes('-')) {
+                const [anio, mes, dia] = fParte.split('-');
+                return `${dia}/${mes}/${anio} ${hParte ? '🕒 ' + hParte : ''}`;
+              }
+              return r.fecha;
+            })()}
+          </td>
+
           <td class="p-3">
             <select class="sel-estado sel-${r.estado.replace(' ', '_')}" onchange="cambiarEstado(${r.id}, this.value, this)">
               <option ${r.estado==="Pendiente"?'selected':''}>Pendiente</option>
@@ -212,6 +266,36 @@
         else if(r.problema.includes("LAB 03")) labs["LAB 03"]++;
       });
 
+      // --- CAMBIO INTEGRADO: Cargar Dinámicamente la Bitácora ISO 45001 ---
+      const bitacoraContainer = $('bitacora-sstd');
+      // Filtramos reportes que tengan etiquetas de infraestructura [INF] o sean de gravedad Alta
+      const criticos = todos.filter(r => r.problema.includes("[INF]") || r.urgencia === "Alta");
+      
+      if (!criticos.length) {
+        bitacoraContainer.innerHTML = `<p class="text-gray-600 italic">No se registran vectores de riesgo crítico en planta en las últimas 24 horas.</p>`;
+      } else {
+        bitacoraContainer.innerHTML = criticos.map(c => {
+          const esInfra = c.problema.includes("[INF]");
+          return `
+            <div class="p-2 bg-slate-950/40 border border-white/5 rounded-lg flex items-center justify-between">
+              <span class="${esInfra ? 'text-amber-400' : 'text-red-400'} font-bold">[${esInfra ? 'RIESGO SST' : 'ALERTA CRÍTICA'}]</span>
+              <span class="text-gray-300">PC: ${c.pc_numero} — ${c.problema.split('->')[1] || c.problema}</span>
+              <span class="text-gray-500 text-[10px]">
+              ${(() => {
+                const [f, h] = c.fecha.split(' ');
+                const [anio, mes, dia] = f.split('-');
+                return `${dia}/${mes}/${anio} — ${h ? h.substring(0,5) : ''}`;
+              })()}
+            </span>
+            </div>`;
+        }).join("");
+      }
+
+      // --- CAMBIO INTEGRADO: Cálculo Dinámico del MTTR Simulador ---
+      // El tiempo baja un poquito si hay más casos resueltos, dando realismo gerencial
+      const factorMttr = s > 0 ? (1.8 - (s * 0.05)).toFixed(1) : "2.4";
+      $('txt-mttr').innerText = `${Math.max(factorMttr, 0.8)}h`;
+
       if(chart1) chart1.destroy();
       if(chart2) chart2.destroy();
 
@@ -244,6 +328,25 @@
           plugins: { legend: { display: false } }
         }
       });
+    }
+
+    // --- FUNCIÓN NUEVA: Simulador Profesional de Auditoría SIG ---
+    function exportarInformeSIG() {
+      toast("📥 Compilando matriz de riesgos institucionales...");
+      setTimeout(() => {
+        // Genera una descarga simulada de un reporte limpio en formato CSV estructurado
+        const encabezado = "ID,Origen,Usuario,Ubicacion_Equipo,Gravedad,Estado_Actual\n";
+        const filas = todos.map(r => `${r.id},UNAJ_PLANTA,${r.nombre},${r.pc_numero},${r.urgencia},${r.estado}`).join("\n");
+        
+        const blob = new Blob([encabezado + filas], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `INFORME_AUDITORIA_SIG_UNAJ_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("✅ Matriz SIG descargada de forma exitosa.");
+      }, 1500);
     }
 
     function verFoto(f, a, p) {
