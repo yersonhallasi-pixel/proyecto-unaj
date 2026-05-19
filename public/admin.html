@@ -1,310 +1,256 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin – Incidencias UNAJ</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNAJ - Panel Administrativo SIG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --azul:#003087; --oro:#F5A800; --oscuro:#0a0f1e; --card:#111827; --borde:#1f2937; }
-    * { box-sizing:border-box; }
-    body { font-family:'IBM Plex Sans',sans-serif; background:var(--oscuro); color:#e5e7eb; min-height:100vh; }
-    .mono { font-family:'IBM Plex Mono',monospace; }
-
-    /* Header */
-    header { background:#0d1524; border-bottom:3px solid var(--oro); }
-
-    /* Stat cards */
-    .stat { background:var(--card); border:1px solid var(--borde); border-radius:10px; padding:16px 20px; }
-    .stat-num { font-size:2rem; font-weight:700; font-family:'IBM Plex Mono',monospace; }
-
-    /* Tabla */
-    .tbl-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--borde); }
-    table { border-collapse:collapse; width:100%; min-width:900px; }
-    thead th { background:#0d1524; color:#9ca3af; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; padding:12px 14px; text-align:left; border-bottom:1px solid var(--borde); }
-    tbody tr { border-bottom:1px solid var(--borde); transition:background .15s; }
-    tbody tr:hover { background:#1a2235; }
-    tbody td { padding:11px 14px; font-size:.85rem; vertical-align:middle; }
-
-    /* Badges urgencia */
-    .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.72rem; font-weight:700; font-family:'IBM Plex Mono',monospace; }
-    .u-Alta   { background:#450a0a; color:#fca5a5; }
-    .u-Media  { background:#451a03; color:#fcd34d; }
-    .u-Baja   { background:#052e16; color:#86efac; }
-
-    /* Select estado */
-    .sel-estado {
-      border-radius:6px; padding:4px 8px; font-size:.8rem; font-weight:600;
-      border:1px solid var(--borde); cursor:pointer; outline:none;
-      transition:border-color .2s;
-    }
-    .sel-estado:focus { border-color:var(--oro); }
-    .sel-Pendiente    { background:#1e1b4b; color:#a5b4fc; }
-    .sel-En_Revision  { background:#292524; color:#fcd34d; }
-    .sel-Solucionado  { background:#052e16; color:#86efac; }
-
-    /* Botón ver foto */
-    .btn-foto { background:#1e293b; border:1px solid #334155; color:#93c5fd; font-size:.75rem; padding:4px 10px; border-radius:6px; cursor:pointer; transition:background .15s; white-space:nowrap; }
-    .btn-foto:hover { background:#1d4ed8; color:#fff; border-color:#1d4ed8; }
-    .btn-foto.sin-foto { color:#4b5563; border-color:#374151; cursor:default; }
-    .btn-foto.sin-foto:hover { background:#1e293b; color:#4b5563; border-color:#374151; }
-
-    /* Modal foto */
-    #modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:1000; align-items:center; justify-content:center; }
-    #modal-overlay.open { display:flex; }
-    #modal-box { background:#111827; border:1px solid var(--borde); border-radius:14px; padding:20px; max-width:520px; width:90%; }
-    #modal-box img { width:100%; border-radius:8px; max-height:420px; object-fit:contain; background:#000; }
-
-    /* Filtro / buscador */
-    .input-dark { background:#111827; border:1px solid var(--borde); border-radius:7px; padding:7px 12px; font-size:.85rem; color:#e5e7eb; outline:none; transition:border-color .2s; }
-    .input-dark:focus { border-color:var(--oro); }
-
-    /* Toast */
-    #toast { position:fixed; bottom:22px; right:22px; padding:11px 18px; border-radius:9px; font-weight:600; font-size:.88rem; box-shadow:0 4px 16px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .3s,transform .3s; transform:translateY(10px); z-index:2000; }
-    #toast.show { opacity:1; transform:translateY(0); }
-    #toast.ok  { background:#166534; color:#fff; }
-    #toast.err { background:#7f1d1d; color:#fca5a5; }
-
-    /* Loading spinner */
-    .spin { display:inline-block; width:16px; height:16px; border:2px solid #374151; border-top-color:var(--oro); border-radius:50%; animation:spin .7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    :root { --azul: #002b5c; --oro: #d4af37; --card: rgba(15, 23, 42, 0.75); }
+    body { background-color: #030712; background-image: linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px); background-size: 24px 24px; color: #f3f4f6; font-family: system-ui, sans-serif; }
+    .card-custom { background: var(--card); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); border-radius: 1rem; }
+    .input-dark { background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.85rem; outline: none; }
+    .input-dark:focus { border-color: var(--oro); }
+    .badge { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; font-family: monospace; }
+    .u-Alta { background: #450a0a; color: #fca5a5; } .u-Media { background: #451a03; color: #fcd34d; } .u-Baja { background: #052e16; color: #86efac; }
+    .sel-estado { border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; font-weight: 600; background: #1e293b; color: #fff; cursor: pointer; outline: none; }
+    .sel-Pendiente { border-left: 4px solid #6366f1; } .sel-En_Revision { border-left: 4px solid #eab308; } .sel-Solucionado { border-left: 4px solid #10b981; }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-between">
 
-  <!-- Header -->
-  <header class="px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+  <header class="px-6 py-4 flex items-center justify-between gap-4 flex-wrap bg-[#0d1524]/90 backdrop-blur border-b-2 border-[#d4af37] shadow-xl">
     <div>
-      <p class="mono text-xs text-yellow-400 tracking-widest uppercase">UNAJ · Área de Software</p>
-      <h1 class="text-xl font-bold text-white mt-0.5">🛠 Panel de Administración — Incidencias</h1>
+      <p class="text-[10px] font-mono text-yellow-400 tracking-widest uppercase font-bold">UNAJ · Área de Software e Infraestructura</p>
+      <h1 class="text-lg font-black text-white tracking-tight">🛠️ Panel de Control de Incidencias</h1>
     </div>
-    <div class="flex items-center gap-3">
-      <button onclick="cargar()" id="btn-reload"
-        class="mono text-xs bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg transition">
-        ↻ Actualizar
-      </button>
-      <a href="/" class="mono text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-400 px-3 py-2 rounded-lg transition">
-        ← Formulario alumno
-      </a>
+    <div class="flex items-center gap-2">
+      <button onclick="cambiarVista('tabla')" id="btn-vista-tabla" class="bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition hover:bg-blue-600 cursor-pointer">📋 Ver Tabla</button>
+      <button onclick="cambiarVista('reportes')" id="btn-vista-reportes" class="bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer">📊 Módulo Reportes</button>
+      <button onclick="cargar()" class="bg-yellow-500 text-black font-black text-xs px-4 py-2 rounded-lg transition hover:bg-yellow-400 cursor-pointer">↻ Actualizar</button>
+      <a href="/" class="text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-2 rounded-lg transition font-mono">← Salir</a>
     </div>
   </header>
 
-  <!-- Stats -->
-  <div class="max-w-7xl mx-auto px-4 pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-    <div class="stat">
-      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Total</p>
-      <p class="stat-num text-white" id="s-total">—</p>
-    </div>
-    <div class="stat">
-      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Pendientes</p>
-      <p class="stat-num text-indigo-400" id="s-pendiente">—</p>
-    </div>
-    <div class="stat">
-      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">En Revisión</p>
-      <p class="stat-num text-yellow-400" id="s-revision">—</p>
-    </div>
-    <div class="stat">
-      <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Solucionados</p>
-      <p class="stat-num text-green-400" id="s-solucionado">—</p>
-    </div>
+  <div class="max-w-[1600px] mx-auto px-4 pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+    <div class="card-custom p-4 text-center"><p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider">Total Casos</p><p class="text-2xl font-black font-mono mt-1 text-white" id="s-total">—</p></div>
+    <div class="card-custom p-4 text-center border-b-2 border-indigo-500"><p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider">Pendientes</p><p class="text-2xl font-black font-mono mt-1 text-indigo-400" id="s-pendiente">—</p></div>
+    <div class="card-custom p-4 text-center border-b-2 border-yellow-500"><p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider">En Revisión</p><p class="text-2xl font-black font-mono mt-1 text-yellow-400" id="s-revision">—</p></div>
+    <div class="card-custom p-4 text-center border-b-2 border-emerald-500"><p class="text-[11px] text-gray-400 uppercase font-bold tracking-wider">Solucionados</p><p class="text-2xl font-black font-mono mt-1 text-emerald-400" id="s-solucionado">—</p></div>
   </div>
 
-  <!-- Filtros -->
-  <div class="max-w-7xl mx-auto px-4 pt-5 flex flex-wrap gap-3 items-center">
-    <input class="input-dark w-56" type="text" id="buscar" placeholder="🔍 Buscar nombre, PC, problema…" oninput="filtrar()" />
-    <select class="input-dark" id="filtro-estado" onchange="filtrar()">
-      <option value="">Todos los estados</option>
-      <option>Pendiente</option>
-      <option>En Revisión</option>
-      <option>Solucionado</option>
-    </select>
-    <select class="input-dark" id="filtro-urgencia" onchange="filtrar()">
-      <option value="">Toda urgencia</option>
-      <option>Alta</option>
-      <option>Media</option>
-      <option>Baja</option>
-    </select>
-    <span id="conteo" class="mono text-xs text-gray-500 ml-auto"></span>
-  </div>
+  <div id="contenedor-tabla" class="max-w-[1600px] mx-auto px-4 py-4 w-full flex-1 space-y-4">
+    <div class="flex flex-wrap gap-3 items-center card-custom p-4">
+      <input class="input-dark w-64" type="text" id="buscar" placeholder="🔍 Buscar por Alumno, PC, Problema..." oninput="filtrar()" />
+      <select class="input-dark" id="filtro-estado" onchange="filtrar()"><option value="">Todos los Estados</option><option>Pendiente</option><option>En Revisión</option><option>Solucionado</option></select>
+      <select class="input-dark" id="filtro-urgencia" onchange="filtrar()"><option value="">Todas las Urgencias</option><option>Alta</option><option>Media</option><option>Baja</option></select>
+      <span id="conteo" class="text-xs font-mono text-gray-500 ml-auto font-bold"></span>
+    </div>
 
-  <!-- Tabla -->
-  <div class="max-w-7xl mx-auto px-4 py-5 pb-16">
-    <div class="tbl-wrap">
-      <table>
+    <div class="overflow-x-auto rounded-xl border border-white/5 shadow-2xl bg-slate-950/20">
+      <table class="w-full text-left border-collapse min-w-[1000px]">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Alumno</th>
-            <th>Correo</th>
-            <th>PC</th>
-            <th>Problema</th>
-            <th>Urgencia</th>
-            <th>Foto</th>
-            <th>Fecha</th>
-            <th>Estado</th>
+          <tr class="bg-[#0d1524] text-gray-400 text-[10px] font-black uppercase tracking-wider border-b border-white/5">
+            <th class="p-3.5">ID</th><th class="p-3.5">Alumno</th><th class="p-3.5">Correo</th><th class="p-3.5">PC</th><th class="p-3.5">Detalle del Problema</th><th class="p-3.5">Urgencia</th><th class="p-3.5">Evidencia</th><th class="p-3.5">Fecha</th><th class="p-3.5">Estado Operacional</th>
           </tr>
         </thead>
-        <tbody id="tbody">
-          <tr><td colspan="9" class="text-center py-10 text-gray-600">
-            <span class="spin"></span>
-          </td></tr>
+        <tbody id="tbody" class="text-xs divide-y divide-white/5 bg-slate-900/40">
+          <tr><td colspan="9" class="text-center py-12 text-gray-500 italic font-mono">Cargando base de datos operacional...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Modal foto -->
-  <div id="modal-overlay" onclick="cerrarModal(event)">
-    <div id="modal-box">
-      <div class="flex justify-between items-center mb-3">
-        <p class="font-semibold text-white" id="modal-titulo">Foto de evidencia</p>
-        <button onclick="document.getElementById('modal-overlay').classList.remove('open')"
-          class="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+  <div id="contenedor-reportes" class="hidden max-w-[1600px] mx-auto px-4 py-4 w-full flex-1">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">📊 Estado de Incidencias</h4>
+        <div class="w-full max-w-[260px] h-[260px] flex items-center justify-center"><canvas id="chartEstados"></canvas></div>
       </div>
-      <img id="modal-img" src="" alt="Evidencia" />
-      <p class="mono text-xs text-gray-500 mt-2 text-center" id="modal-info"></p>
+      <div class="card-custom p-5 flex flex-col items-center justify-center bg-slate-900/80">
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest mb-4">🏢 Fallas por Laboratorio</h4>
+        <div class="w-full max-w-[300px] h-[260px] flex items-center justify-center"><canvas id="chartLaboratorios"></canvas></div>
+      </div>
+      <div class="card-custom p-5 flex flex-col items-center justify-center text-center space-y-4 bg-slate-900/80">
+        <h4 class="text-xs font-black text-yellow-400 uppercase tracking-widest">📈 Control de Calidad SIG</h4>
+        <div class="p-6 bg-slate-950/60 rounded-full border border-emerald-500/20 w-36 h-36 flex items-center justify-center">
+          <div><p class="text-3xl font-black font-mono text-emerald-400" id="txt-eficiencia">0%</p><p class="text-[9px] font-bold text-gray-500 uppercase mt-0.5">Resuelto</p></div>
+        </div>
+        <p class="text-xs text-gray-400 px-4 leading-relaxed">Mapeo porcentual de efectividad técnica sobre las solicitudes operacionales reportadas por los estudiantes en planta.</p>
+      </div>
     </div>
   </div>
 
-  <div id="toast"></div>
+  <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5">
+    © 2026 Universidad Nacional de Juliaca · Módulo Gerencial de Decisiones
+  </footer>
+
+  <div id="modal-overlay" onclick="e=>e.target===this&&this.classList.remove('open')" class="hidden fixed inset-0 bg-black/85 z-50 items-center justify-center p-4 [&.open]:flex">
+    <div class="bg-slate-900 border border-white/10 rounded-xl p-5 max-w-lg w-full relative">
+      <button onclick="$('modal-overlay').classList.remove('open')" class="absolute top-3 right-4 text-gray-400 hover:text-white text-lg font-mono">✕</button>
+      <h3 class="text-sm font-bold text-white mb-3" id="modal-titulo">Evidencia del Reporte</h3>
+      <img id="modal-img" src="" class="w-full rounded-lg max-h-[400px] object-contain bg-black" />
+      <p id="modal-info" class="text-center font-mono text-[11px] text-gray-500 mt-2.5"></p>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-5 right-5 p-3 rounded-lg text-xs font-bold text-white bg-emerald-950 border border-emerald-500/30 shadow-2xl opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 [&.show]:opacity-100 [&.show]:translate-y-0"></div>
 
   <script>
-    let todos = [];
+    let todos = [], chart1 = null, chart2 = null;
+    const $ = id => document.getElementById(id);
 
-    /* Toast */
-    function toast(msg, tipo = "ok") {
-      const t = document.getElementById("toast");
-      t.textContent = msg; t.className = `show ${tipo}`;
-      setTimeout(() => { t.className = ""; }, 3000);
+    function toast(msg) {
+      const t = $('toast'); t.innerText = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    /* Cargar datos */
+    function cambiarVista(vista) {
+      if (vista === 'tabla') {
+        $('contenedor-tabla').classList.remove('hidden'); $('contenedor-reportes').classList.add('hidden');
+        $('btn-vista-tabla').className = "bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition cursor-pointer";
+        $('btn-vista-reportes').className = "bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer";
+      } else {
+        $('contenedor-tabla').classList.add('hidden'); $('contenedor-reportes').classList.remove('hidden');
+        $('btn-vista-reportes').className = "bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition cursor-pointer";
+        $('btn-vista-tabla').className = "bg-slate-800 text-gray-300 font-bold text-xs px-4 py-2 rounded-lg border border-slate-700 transition hover:bg-slate-700 hover:text-white cursor-pointer";
+        renderizarGraficos();
+      }
+    }
+
     async function cargar() {
-      document.getElementById("btn-reload").textContent = "…";
       try {
         const res = await fetch("/api/admin/incidencias");
         todos = await res.json();
-        actualizarStats();
-        filtrar();
-      } catch {
-        toast("Error al conectar con el servidor.", "err");
-      } finally {
-        document.getElementById("btn-reload").textContent = "↻ Actualizar";
-      }
+        actualizarStats(); filtrar();
+        if (!$('contenedor-reportes').classList.contains('hidden')) renderizarGraficos();
+      } catch { toast("❌ Error de enlace de datos."); }
     }
 
-    /* Stats */
     function actualizarStats() {
-      document.getElementById("s-total").textContent       = todos.length;
-      document.getElementById("s-pendiente").textContent   = todos.filter(r => r.estado === "Pendiente").length;
-      document.getElementById("s-revision").textContent    = todos.filter(r => r.estado === "En Revisión").length;
-      document.getElementById("s-solucionado").textContent = todos.filter(r => r.estado === "Solucionado").length;
+      const p = todos.filter(r => r.estado === "Pendiente").length;
+      const e = todos.filter(r => r.estado === "En Revisión").length;
+      const s = todos.filter(r => r.estado === "Solucionado").length;
+      
+      $('s-total').innerText = todos.length;
+      $('s-pendiente').innerText = p; $('s-revision').innerText = e; $('s-solucionado').innerText = s;
+      $('txt-eficiencia').innerText = todos.length ? `${Math.round((s / todos.length) * 100)}%` : '0%';
     }
 
-    /* Filtrar */
     function filtrar() {
-      const q   = document.getElementById("buscar").value.toLowerCase();
-      const est = document.getElementById("filtro-estado").value;
-      const urg = document.getElementById("filtro-urgencia").value;
+      const q = $('buscar').value.toLowerCase();
+      const est = $('filtro-estado').value;
+      const urg = $('filtro-urgencia').value;
 
-      const filtrados = todos.filter(r => {
-        const texto = `${r.nombre} ${r.apellido} ${r.pc_numero} ${r.problema}`.toLowerCase();
-        return (!q   || texto.includes(q))
-            && (!est || r.estado === est)
-            && (!urg || r.urgencia === urg);
+      const f = todos.filter(r => {
+        const t = `${r.nombre} ${r.pc_numero} ${r.problema}`.toLowerCase();
+        return (!q || t.includes(q)) && (!est || r.estado === est) && (!urg || r.urgencia === urg);
       });
 
-      document.getElementById("conteo").textContent = `${filtrados.length} registro${filtrados.length !== 1 ? "s" : ""}`;
-      renderizar(filtrados);
+      $('conteo').innerText = `${f.length} caso${f.length !== 1 ? 's' : ''}`;
+      renderizarTabla(f);
     }
 
-    /* Renderizar tabla */
-    function renderizar(data) {
-      const tbody = document.getElementById("tbody");
-
-      if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-600 italic">Sin resultados.</td></tr>`;
-        return;
-      }
-
-      const urgClass = { Alta:"u-Alta", Media:"u-Media", Baja:"u-Baja" };
-      const selClass = { "Pendiente":"sel-Pendiente", "En Revisión":"sel-En_Revision", "Solucionado":"sel-Solucionado" };
+    function renderizarTabla(data) {
+      const tbody = $('tbody');
+      if (!data.length) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-500 italic font-mono">Sin registros filtrados.</td></tr>`; return; }
 
       tbody.innerHTML = data.map(r => {
         const tieneFoto = r.foto && r.foto !== "null";
+        const problemaLimpio = r.problema.includes('->') ? r.problema.split('->')[1] : r.problema;
         return `
-        <tr>
-          <td class="mono text-gray-500">${r.id}</td>
-          <td>
-            <p class="font-semibold text-white">${r.nombre} ${r.apellido}</p>
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="p-3 font-mono text-gray-500 font-bold">${r.id}</td>
+          <td class="p-3 font-semibold text-white">${r.nombre}</td>
+          <td class="p-3 font-mono text-[11px] text-gray-400">${r.correo}</td>
+          <td class="p-3 font-mono font-black text-yellow-300 text-sm">${r.pc_numero}</td>
+          <td class="p-3 text-gray-300 max-w-[280px] truncate" title="${r.problema}">${problemaLimpio}</td>
+          <td class="p-3"><span class="badge u-${r.urgencia}">${r.urgencia}</span></td>
+          <td class="p-3">
+            ${tieneFoto ? `<button onclick="verFoto('${r.foto}','${r.nombre}','${r.pc_numero}')" class="bg-slate-800 border border-slate-700 text-blue-400 text-[10px] px-2 py-1 rounded cursor-pointer hover:bg-blue-600 hover:text-white transition">📷 Ver foto</button>` : `<span class="text-gray-600 italic text-[11px]">Sin foto</span>`}
           </td>
-          <td class="mono text-xs text-gray-400">${r.correo}</td>
-          <td class="mono font-bold text-yellow-300">${r.pc_numero}</td>
-          <td class="text-gray-300">${r.problema}</td>
-          <td><span class="badge ${urgClass[r.urgencia]||''}">${r.urgencia}</span></td>
-          <td>
-            ${tieneFoto
-              ? `<button class="btn-foto" onclick="verFoto('${r.foto}','${r.nombre} ${r.apellido}','${r.pc_numero}')">📷 Ver foto</button>`
-              : `<span class="btn-foto sin-foto">Sin foto</span>`
-            }
-          </td>
-          <td class="mono text-xs text-gray-500">${r.fecha}</td>
-          <td>
-            <select class="sel-estado ${selClass[r.estado]||''}"
-              onchange="cambiarEstado(${r.id}, this.value, this)"
-              data-id="${r.id}">
-              <option ${r.estado==="Pendiente"    ? "selected":""}>Pendiente</option>
-              <option ${r.estado==="En Revisión"  ? "selected":""}>En Revisión</option>
-              <option ${r.estado==="Solucionado"  ? "selected":""}>Solucionado</option>
+          <td class="p-3 font-mono text-gray-500 text-[11px]">${r.fecha.split(' ')[0]}</td>
+          <td class="p-3">
+            <select class="sel-estado sel-${r.estado.replace(' ', '_')}" onchange="cambiarEstado(${r.id}, this.value, this)">
+              <option ${r.estado==="Pendiente"?'selected':''}>Pendiente</option>
+              <option ${r.estado==="En Revisión"?'selected':''}>En Revisión</option>
+              <option ${r.estado==="Solucionado"?'selected':''}>Solucionado</option>
             </select>
           </td>
         </tr>`;
       }).join("");
     }
 
-    /* Cambiar estado */
-    async function cambiarEstado(id, nuevo_estado, selectEl) {
-      selectEl.disabled = true;
+    async function cambiarEstado(id, nuevo_estado, el) {
+      el.disabled = true;
       try {
         const res = await fetch("/api/incidencias/cambiar-estado", {
-          method:  "POST",
-          headers: { "Content-Type":"application/json" },
-          body:    JSON.stringify({ id, nuevo_estado }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, nuevo_estado }),
         });
         if (!res.ok) throw new Error();
-
-        // Actualizar en memoria
-        const reg = todos.find(r => r.id === id);
-        if (reg) reg.estado = nuevo_estado;
-
+        
+        const reg = todos.find(r => r.id === id); if (reg) reg.estado = nuevo_estado;
         actualizarStats();
-
-        // Actualizar clase del select
-        const map = { "Pendiente":"sel-Pendiente", "En Revisión":"sel-En_Revision", "Solucionado":"sel-Solucionado" };
-        selectEl.className = `sel-estado ${map[nuevo_estado]||""}`;
-
-        toast(`✅ Estado actualizado → ${nuevo_estado}`);
-      } catch {
-        toast("❌ Error al cambiar el estado.", "err");
-      } finally {
-        selectEl.disabled = false;
-      }
+        el.className = `sel-estado sel-${nuevo_estado.replace(' ', '_')}`;
+        toast(`✅ Registro N.°${id} cambiado a ${nuevo_estado}`);
+      } catch { toast("❌ Error al mutar el estado."); }
+      finally { el.disabled = false; }
     }
 
-    /* Modal foto */
-    function verFoto(filename, alumno, pc) {
-      document.getElementById("modal-img").src    = `/uploads/${filename}`;
-      document.getElementById("modal-titulo").textContent = `Foto de evidencia`;
-      document.getElementById("modal-info").textContent   = `${alumno} · ${pc}`;
-      document.getElementById("modal-overlay").classList.add("open");
-    }
-    function cerrarModal(e) {
-      if (e.target === document.getElementById("modal-overlay"))
-        document.getElementById("modal-overlay").classList.remove("open");
+    function renderizarGraficos() {
+      const p = todos.filter(r => r.estado === "Pendiente").length;
+      const e = todos.filter(r => r.estado === "En Revisión").length;
+      const s = todos.filter(r => r.estado === "Solucionado").length;
+
+      const labs = { "LAB 01": 0, "LAB 02": 0, "LAB 03": 0 };
+      todos.forEach(r => {
+        if(r.problema.includes("LAB 01")) labs["LAB 01"]++;
+        else if(r.problema.includes("LAB 02")) labs["LAB 02"]++;
+        else if(r.problema.includes("LAB 03")) labs["LAB 03"]++;
+      });
+
+      if(chart1) chart1.destroy();
+      if(chart2) chart2.destroy();
+
+      chart1 = new Chart($('chartEstados'), {
+        type: 'pie',
+        data: {
+          labels: ['Pendientes', 'En Revisión', 'Solucionados'],
+          datasets: [{ data: [p, e, s], backgroundColor: ['#6366f1', '#eab308', '#10b981'], borderWidth: 0 }]
+        },
+        options: { 
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } } 
+        }
+      });
+
+      chart2 = new Chart($('chartLaboratorios'), {
+        type: 'bar',
+        data: {
+          labels: ['LAB 01', 'LAB 02', 'LAB 03'],
+          datasets: [{ label: 'Casos', data: [labs["LAB 01"], labs["LAB 02"], labs["LAB 03"]], backgroundColor: '#d4af37' }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#9ca3af' }, grid: { display: false } },
+            y: { ticks: { color: '#9ca3af', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
     }
 
-    /* Arrancar */
+    function verFoto(f, a, p) {
+      $('modal-img').src = `/uploads/${f}`; $('modal-titulo').innerText = `Evidencia: ${a}`;
+      $('modal-info').innerText = `Equipo afectado: ${p}`; $('modal-overlay').classList.add('open');
+    }
+
     cargar();
   </script>
 </body>
