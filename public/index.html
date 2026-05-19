@@ -134,7 +134,7 @@
   </div>
 
   <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5 mt-6">
-    © 2026 Universidad Nacional de Juliaca · Planta Tecnológica SIG
+    © 2026 Universidad Nacional de Juliaca · 9no Semestre SIG
   </footer>
 
   <div id="toast" class="fixed bottom-5 right-5 p-3 rounded-lg text-xs font-bold text-white bg-emerald-950 border border-emerald-500/30 shadow-2xl opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 [&.show]:opacity-100 [&.show]:translate-y-0 [&.err]:bg-red-950"></div>
@@ -176,9 +176,9 @@
           cargarIncidenciasAlumno();
         } else { toast("❌ Debe usar un correo institucional", "err"); }
       } else {
-        if (iden === 'admin' || iden === 'admin123') {
-          window.location.href = '/admin'; // Redirección corregida oficial
-        } else { toast("❌ Clave administrativa incorrecta", "err"); }
+        if (iden === 'admin' || iden === 'admin123' || iden === 'xavier@unaj.edu.pe' || iden === 'soporte1@unaj.edu.pe') {
+  window.location.href = '/admin'; // Todos ellos entran al panel con gráficos
+} else { toast("❌ Clave administrativa incorrecta", "err"); }
       }
     }
 
