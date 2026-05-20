@@ -8,9 +8,38 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root { --azul: #003087; --azul-m: #001a4d; --oro: #F5A800; --oscuro: #0a0f1e; --borde: #1f2937; }
-    body { font-family: 'IBM Plex Sans', sans-serif; background-color: var(--oscuro); background-image: linear-gradient(rgba(245,168,0,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(245,168,0,0.012) 1px, transparent 1px); background-size: 30px 30px; color: #e5e7eb; }
+    
+    body { 
+      font-family: 'IBM Plex Sans', sans-serif; 
+      background-color: var(--oscuro); 
+      color: #e5e7eb; 
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    /* 🖼️ CAPA DEL FONDO UNIVERSITARIO OFICIAL */
+    .bg-campus-unaj {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: url('https://scontent.fjul2-1.fna.fbcdn.net/v/t39.30808-6/581825082_1269825828496486_6086974292113371210_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHC5zCVrFwatuUTwSKemHlcjNSQLvfWHg-M1JAu99YeDzyiAFKpId-5LA5TjHm18Bi8Th8tpRQkD11w6uQIgK2S&_nc_ohc=64HgRoWYprYQ7kNvwEaPCi8&_nc_oc=Ado_D25xBwb0st3TbjqGbvY6GPt1YIJmGq8uxXZUFMn-jHEcGTEN9ODJsgZGJrNWASw&_nc_zt=23&_nc_ht=scontent.fjul2-1.fna&_nc_gid=pPhxZoAOjBJQAXwd3R0vuQ&_nc_ss=7b2a8&oh=00_Af52vGnxja5bQQ_KKV-F93IjeBENJCWCEmc-NKHY4Vd5HQ&oe=6A130A9C'); 
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Máscara oscura con opacidad equilibrada para no tapar el fondo */
+    .bg-overlay-sig {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-color: rgba(10, 15, 30, 0.85); 
+      background-image: linear-gradient(rgba(245,168,0,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(245,168,0,0.012) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
     .mono { font-family: 'IBM Plex Mono', monospace; }
-    .card-custom { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid var(--borde); border-radius: 14px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+    .card-custom { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6); }
     .input-dark { background: #111827; border: 1px solid var(--borde); border-radius: 7px; padding: 10px 14px; font-size: .85rem; color: #e5e7eb; outline: none; transition: border-color .2s; }
     .input-dark:focus { border-color: var(--oro); }
     .badge { padding: 2px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
@@ -21,33 +50,78 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
-  <div id="section-login" class="flex-1 flex flex-col items-center justify-center py-12 px-4">
-    <div class="text-center mb-6">
-      <span class="mono text-xs font-bold tracking-widest text-[var(--oro)] uppercase bg-slate-900/80 px-4 py-1.5 rounded-full border border-[var(--oro)]/30">• UNAJ · ÁREA DE SOFTWARE •</span>
+  <div class="bg-campus-unaj"></div>
+  <div class="bg-overlay-sig"></div>
+
+  <div id="section-login" class="flex-1 flex flex-col items-center justify-center py-12 px-4 max-w-6xl mx-auto w-full">
+    <div class="text-center mb-8 w-full">
+      <span class="mono text-xs font-bold tracking-widest text-[var(--oro)] uppercase bg-slate-900/90 px-4 py-1.5 rounded-full border border-[var(--oro)]/30">• UNAJ · ÁREA DE SOFTWARE E INFRAESTRUCTURA •</span>
     </div>
 
-    <div class="card-custom w-full max-w-md p-8">
-      <h2 class="text-2xl font-bold text-center tracking-tight text-white mb-1">Sistema de Incidencias</h2>
-      <p class="text-xs text-center text-gray-400 mb-6">Laboratorios de Cómputo</p>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
+      
+      <div class="lg:col-span-5 card-custom p-8 border-t-2 border-[var(--oro)]/40 w-full">
+        <h2 class="text-2xl font-bold text-center tracking-tight text-white mb-1">Sistema de Incidencias SIG</h2>
+        <p class="text-xs text-center text-gray-400 mb-4">Laboratorios de Cómputo</p>
 
-      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl mb-6 border border-white/5">
-        <button id="tab-alumno" onclick="switchTab('alumno')" class="py-2.5 text-xs font-bold rounded-lg transition-all bg-[var(--oro)] text-black shadow-md cursor-pointer">👨‍🎓 Alumno</button>
-        <button id="tab-admin" onclick="switchTab('admin')" class="py-2.5 text-xs font-bold rounded-lg transition-all text-gray-400 hover:text-white cursor-pointer">🛠️ Administrador</button>
+        <div class="p-3 bg-slate-950/70 border border-white/5 rounded-xl mb-5 text-center">
+          <p class="text-[11px] text-gray-400 leading-relaxed">
+            Control operacional y mitigación de riesgos bajo los estándares internacionales <span class="text-white font-bold">ISO 9001</span> (Calidad) e <span class="text-white font-bold">ISO 14001</span> (Gestión Ambiental).
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl mb-6 border border-white/5">
+          <button id="tab-alumno" onclick="switchTab('alumno')" class="py-2.5 text-xs font-bold rounded-lg transition-all bg-[var(--oro)] text-black shadow-md cursor-pointer">👨‍🎓 Alumno</button>
+          <button id="tab-admin" onclick="switchTab('admin')" class="py-2.5 text-xs font-bold rounded-lg transition-all text-gray-400 hover:text-white cursor-pointer">🛠️ Administrador</button>
+        </div>
+
+        <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+          <div id="group-nombre">
+            <label class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Nombre Completo</label>
+            <input type="text" id="login-nombre" placeholder="Ej:  maria rosa" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
+          </div>
+          
+          <div>
+            <label id="label-identificador" class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Correo Institucional</label>
+            <input type="text" id="login-identificador" placeholder="usuario@unaj.edu.pe" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
+          </div>
+
+          <button type="submit" id="btn-login-submit" class="w-full bg-[var(--oro)] hover:bg-yellow-400 text-black font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl cursor-pointer transition-all active:scale-[0.98]">Ingresar como Alumno →</button>
+        </form>
       </div>
 
-      <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
-        <div id="group-nombre">
-          <label class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Nombre Completo</label>
-          <input type="text" id="login-nombre" placeholder="Ej: Juan Quispe" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
+      <div class="lg:col-span-7 space-y-4 text-left p-2">
+        <div class="inline-block px-3 py-1 bg-blue-950/40 border border-blue-900/30 rounded-lg">
+          <p class="mono text-[10px] font-bold text-blue-400 tracking-wider uppercase">📊 Guía de Control Operacional</p>
         </div>
-        
-        <div>
-          <label id="label-identificador" class="block text-xs font-bold tracking-wider text-gray-400 uppercase mb-1.5">Correo Institucional</label>
-          <input type="text" id="login-identificador" placeholder="usuario@unaj.edu.pe" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[var(--oro)] transition-colors" required />
-        </div>
+        <h3 class="text-2xl font-black text-white tracking-tight">¿Cómo funciona el Reporte de Planta?</h3>
+        <p class="text-sm text-gray-300 leading-relaxed">
+          Esta plataforma permite a la comunidad académica de la <strong>UNAJ</strong> mapear en tiempo real las no conformidades técnicas de los laboratorios, garantizando una respuesta inmediata y el cuidado de la infraestructura.
+        </p>
 
-        <button type="submit" id="btn-login-submit" class="w-full bg-[var(--oro)] hover:bg-yellow-400 text-black font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl cursor-pointer transition-all active:scale-[0.98]">Ingresar como Alumno →</button>
-      </form>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div class="card-custom p-4 bg-slate-900/40 border-l-4 border-yellow-500">
+            <h4 class="text-xs font-bold text-white uppercase font-mono mb-1">📝 1. Identificar e Informar</h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">Selecciona tu laboratorio, ingresa el número de PC afectada y tipifica el error (Hardware, Software o Infraestructura riesgosas).</p>
+          </div>
+
+          <div class="card-custom p-4 bg-slate-900/40 border-l-4 border-indigo-500">
+            <h4 class="text-xs font-bold text-white uppercase font-mono mb-1">📸 2. Evidencia Fotográfica</h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">Sube una captura clara del problema. Esto permite al equipo de soporte diagnosticar el fallo antes de asistir a la planta física.</p>
+          </div>
+
+          <div class="card-custom p-4 bg-slate-900/40 border-l-4 border-emerald-500">
+            <h4 class="text-xs font-bold text-white uppercase font-mono mb-1">📉 3. Trazabilidad ISO 9001</h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">Cada reporte alimenta el indicador de Eficiencia y calcula el Tiempo de Respuesta (MTTR) para auditorías de acreditación.</p>
+          </div>
+
+          <div class="card-custom p-4 bg-slate-900/40 border-l-4 border-cyan-500">
+            <h4 class="text-xs font-bold text-white uppercase font-mono mb-1">🌱 4. Impacto Cero Papel</h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">Al digitalizar el flujo bajo la norma ISO 14001, eliminamos el uso de bitácoras físicas, reduciendo los residuos de oficina.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -133,8 +207,8 @@
     </div>
   </div>
 
-  <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5 mt-6">
-    © 2026 Universidad Nacional de Juliaca · 9no Semestre SIG
+  <footer class="text-center py-4 text-[10px] text-gray-600 font-mono border-t border-white/5 mt-6 relative z-10">
+    © 2026 Universidad Nacional de Juliaca · Software y Sistemas SIG
   </footer>
 
   <div id="toast" class="fixed bottom-5 right-5 p-3 rounded-lg text-xs font-bold text-white bg-emerald-950 border border-emerald-500/30 shadow-2xl opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 [&.show]:opacity-100 [&.show]:translate-y-0 [&.err]:bg-red-950"></div>
@@ -169,6 +243,9 @@
         if(iden.includes('@unaj.edu.pe')) {
           const nom = $('login-nombre').value;
           sessionUser = { correo: iden, nombre: nom.toUpperCase() };
+          
+          document.querySelectorAll('.bg-campus-unaj, .bg-overlay-sig').forEach(el => el.style.display = 'none');
+          
           $('section-login').classList.add("hidden");
           $('section-alumno').classList.remove("hidden");
           $('user-display-alumno').innerText = `${nom} (${iden})`;
@@ -177,8 +254,8 @@
         } else { toast("❌ Debe usar un correo institucional", "err"); }
       } else {
         if (iden === 'admin' || iden === 'admin123' || iden === 'xavier@unaj.edu.pe' || iden === 'soporte1@unaj.edu.pe') {
-  window.location.href = '/admin'; // Todos ellos entran al panel con gráficos
-} else { toast("❌ Clave administrativa incorrecta", "err"); }
+          window.location.href = '/admin';
+        } else { toast("❌ Clave administrativa incorrecta", "err"); }
       }
     }
 
